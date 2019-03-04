@@ -9,7 +9,6 @@ use App\Utils\Slugger;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Security;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -54,37 +53,24 @@ class BlogController extends AbstractController
      */
     public function new(Request $request): Response
     {
-        $post = new Post();
-        $post->setAuthor($this->getUser());
+        // @todo: manage the form and the post.
 
-        // See https://symfony.com/doc/current/book/forms.html#submitting-forms-with-multiple-buttons
-        $form = $this->createForm(PostType::class, $post)
-            ->add('saveAndCreateNew', SubmitType::class);
+        $post = new Post();
+
+        $form = $this->createForm(PostType::class, $post);
 
         $form->handleRequest($request);
 
-        // the isSubmitted() method is completely optional because the other
-        // isValid() method already checks whether the form is submitted.
-        // However, we explicitly add it to improve code readability.
-        // See https://symfony.com/doc/current/best_practices/forms.html#handling-form-submits
         if ($form->isSubmitted() && $form->isValid()) {
+            $manager = $this->getDoctrine()->getManager();
+
             $post->setSlug(Slugger::slugify($post->getTitle()));
+            $post->setAuthor($this->getUser());
 
-            $em = $this->getDoctrine()->getManager();
-            $em->persist($post);
-            $em->flush();
+            $manager->persist($post);
+            $manager->flush();
 
-            // Flash messages are used to notify the user about the result of the
-            // actions. They are deleted automatically from the session as soon
-            // as they are accessed.
-            // See https://symfony.com/doc/current/book/controller.html#flash-messages
-            $this->addFlash('success', 'post.created_successfully');
-
-            if ($form->get('saveAndCreateNew')->isClicked()) {
-                return $this->redirectToRoute('admin_post_new');
-            }
-
-            return $this->redirectToRoute('admin_post_index');
+            return $this->redirectToRoute('admin_post_show', ['id' => $post->getId()]);
         }
 
         return $this->render('admin/blog/new.html.twig', [
@@ -100,13 +86,8 @@ class BlogController extends AbstractController
      */
     public function show(Post $post): Response
     {
-        // This security check can also be performed
-        // using an annotation: @IsGranted("show", subject="post")
-        $this->denyAccessUnlessGranted('show', $post, 'Posts can only be shown to their authors.');
-
-        return $this->render('admin/blog/show.html.twig', [
-            'post' => $post,
-        ]);
+        // @todo: render the template with the post
+        return $this->render('admin/blog/show.html.twig', ['post' => $post]);
     }
 
     /**
@@ -121,14 +102,19 @@ class BlogController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $manager = $this->getDoctrine()->getManager();
+
             $post->setSlug(Slugger::slugify($post->getTitle()));
+            // @todo: persist the update
+
             $this->getDoctrine()->getManager()->flush();
 
             $this->addFlash('success', 'post.updated_successfully');
 
-            return $this->redirectToRoute('admin_post_edit', ['id' => $post->getId()]);
+            return $this->redirectToRoute('admin_post_show', ['id' => $post->getId()]);
         }
 
+        // @todo rendrer the post and form
         return $this->render('admin/blog/edit.html.twig', [
             'post' => $post,
             'form' => $form->createView(),
@@ -152,9 +138,12 @@ class BlogController extends AbstractController
         // because foreign key support is not enabled by default in SQLite
         $post->getTags()->clear();
 
-        $em = $this->getDoctrine()->getManager();
-        $em->remove($post);
-        $em->flush();
+        // @todo: delete the post
+
+        $manager = $this->getDoctrine()->getManager();
+
+        $manager->remove($post);
+        $manager->flush();
 
         $this->addFlash('success', 'post.deleted_successfully');
 

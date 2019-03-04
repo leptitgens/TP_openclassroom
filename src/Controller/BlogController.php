@@ -40,7 +40,6 @@ class BlogController extends AbstractController
             $tag = $tags->findOneBy(['name' => $request->query->get('tag')]);
         }
         $latestPosts = $posts->findLatest($page, $tag);
-
         // Every template name also has two extensions that specify the format and
         // engine for that template.
         // See https://symfony.com/doc/current/templating.html#template-suffix

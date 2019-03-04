@@ -73,7 +73,6 @@ class BlogControllerTest extends WebTestCase
         $postTitle = 'Blog Post Title '.mt_rand();
         $postSummary = $this->generateRandomString(255);
         $postContent = $this->generateRandomString(1024);
-
         $client = static::createClient([], [
             'PHP_AUTH_USER' => 'jane_admin',
             'PHP_AUTH_PW' => 'kitten',
@@ -85,6 +84,7 @@ class BlogControllerTest extends WebTestCase
             'post[summary]' => $postSummary,
             'post[content]' => $postContent,
         ]);
+
         $client->submit($form);
 
         self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode());
@@ -117,7 +117,6 @@ class BlogControllerTest extends WebTestCase
     public function testAdminEditPost()
     {
         $newBlogPostTitle = 'Blog Post Title '.mt_rand();
-
         $client = static::createClient([], [
             'PHP_AUTH_USER' => 'jane_admin',
             'PHP_AUTH_PW' => 'kitten',
@@ -127,11 +126,10 @@ class BlogControllerTest extends WebTestCase
             'post[title]' => $newBlogPostTitle,
         ]);
         $client->submit($form);
-
         self::assertSame(Response::HTTP_FOUND, $client->getResponse()->getStatusCode());
-
         /** @var Post $post */
         $post = $client->getContainer()->get('doctrine')->getRepository(Post::class)->find(1);
+
         self::assertSame($newBlogPostTitle, $post->getTitle());
     }
 
